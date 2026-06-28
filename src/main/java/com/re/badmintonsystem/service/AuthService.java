@@ -1,7 +1,6 @@
 package com.re.badmintonsystem.service;
 
-import com.re.badmintonsystem.dto.request.LoginRequest;
-import com.re.badmintonsystem.dto.request.RegisterRequest;
+import com.re.badmintonsystem.dto.request.*;
 import com.re.badmintonsystem.dto.response.AuthResponse;
 
 public interface AuthService {
@@ -9,4 +8,7 @@ public interface AuthService {
     AuthResponse login(LoginRequest request);
     AuthResponse refreshToken(String refreshToken);
     void logout(String accessToken);
+    void forgotPassword(ForgotPasswordRequest request);
+    void resetPassword(ResetPasswordRequest request);
+    void changePassword(Long userId, ChangePasswordRequest request);
 }

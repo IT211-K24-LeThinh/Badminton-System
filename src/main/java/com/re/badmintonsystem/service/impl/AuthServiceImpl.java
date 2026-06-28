@@ -1,19 +1,14 @@
 package com.re.badmintonsystem.service.impl;
 
-import com.re.badmintonsystem.dto.request.LoginRequest;
-import com.re.badmintonsystem.dto.request.RegisterRequest;
+import com.re.badmintonsystem.dto.request.*;
 import com.re.badmintonsystem.dto.response.AuthResponse;
-import com.re.badmintonsystem.entity.Role;
-import com.re.badmintonsystem.entity.TokenBlacklist;
-import com.re.badmintonsystem.entity.User;
-import com.re.badmintonsystem.entity.UserStatus;
+import com.re.badmintonsystem.entity.*;
 import com.re.badmintonsystem.exception.BadRequestException;
 import com.re.badmintonsystem.exception.UnauthorizedException;
-import com.re.badmintonsystem.repository.RoleRepository;
-import com.re.badmintonsystem.repository.TokenBlacklistRepository;
-import com.re.badmintonsystem.repository.UserRepository;
+import com.re.badmintonsystem.repository.*;
 import com.re.badmintonsystem.security.JwtTokenProvider;
 import com.re.badmintonsystem.service.AuthService;
+import com.re.badmintonsystem.service.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,10 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,19 +33,25 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final EmailService emailService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     public AuthServiceImpl(UserRepository userRepository,
                            RoleRepository roleRepository,
                            TokenBlacklistRepository tokenBlacklistRepository,
                            PasswordEncoder passwordEncoder,
                            JwtTokenProvider jwtTokenProvider,
-                           AuthenticationManager authenticationManager) {
+                           AuthenticationManager authenticationManager,
+                           EmailService emailService,
+                           PasswordResetTokenRepository passwordResetTokenRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.tokenBlacklistRepository = tokenBlacklistRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.authenticationManager = authenticationManager;
+        this.emailService = emailService;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
     @Override
@@ -203,5 +202,79 @@ public class AuthServiceImpl implements AuthService {
         tokenBlacklistRepository.save(blacklistEntry);
 
         log.info("Token revoked successfully");
+    }
+
+    @Override
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        log.info("Processing forgot password request for: {}", request.getEmail());
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadRequestException("No account found with this email"));
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new BadRequestException("Account is not active");
+        }
+
+        // Generate a random reset token (hash of UUID)
+        String rawToken = UUID.randomUUID().toString();
+        String tokenHash = String.valueOf(rawToken.hashCode());
+
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setUser(user);
+        resetToken.setTokenHash(tokenHash);
+        resetToken.setExpiresAt(LocalDateTime.now().plusHours(1));
+        resetToken.setUsed(false);
+        passwordResetTokenRepository.save(resetToken);
+
+        emailService.sendPasswordResetEmail(user.getEmail(), rawToken);
+
+        log.info("Password reset token sent to: {}", user.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        log.info("Processing reset password request");
+
+        String tokenHash = String.valueOf(request.getToken().hashCode());
+
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new BadRequestException("Invalid or expired reset token"));
+
+        if (resetToken.isUsed()) {
+            throw new BadRequestException("Reset token has already been used");
+        }
+
+        if (resetToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Reset token has expired");
+        }
+
+        User user = resetToken.getUser();
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        passwordResetTokenRepository.save(resetToken);
+
+        log.info("Password reset successfully for user: {}", user.getUsername());
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        log.info("Processing change password request for user: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        log.info("Password changed successfully for user: {}", user.getUsername());
     }
 }

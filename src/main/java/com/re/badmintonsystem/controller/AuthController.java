@@ -1,14 +1,14 @@
 package com.re.badmintonsystem.controller;
 
-import com.re.badmintonsystem.dto.request.LoginRequest;
-import com.re.badmintonsystem.dto.request.RefreshTokenRequest;
-import com.re.badmintonsystem.dto.request.RegisterRequest;
+import com.re.badmintonsystem.dto.request.*;
 import com.re.badmintonsystem.dto.response.ApiResponse;
 import com.re.badmintonsystem.dto.response.AuthResponse;
+import com.re.badmintonsystem.security.CustomUserDetails;
 import com.re.badmintonsystem.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -47,5 +47,27 @@ public class AuthController {
         String token = authHeader.replace("Bearer ", "");
         authService.logout(token);
         return ResponseEntity.ok(ApiResponse.success("Logged out successfully", null));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("If your email is registered, you will receive a reset link", null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Password has been reset successfully", null));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(userDetails.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
 }

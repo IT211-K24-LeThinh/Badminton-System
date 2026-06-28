@@ -34,6 +34,9 @@ dependencies {
     // Redis (for token blacklist in future Sprint)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // Mail
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
     // Cloudinary (for image upload in future Sprint)
     implementation 'com.cloudinary:cloudinary-http44:1.39.0'
 
