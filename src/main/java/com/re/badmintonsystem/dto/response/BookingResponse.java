@@ -25,13 +25,10 @@ public class BookingResponse {
     private LocalDate bookingDate;
     private String status;
     private BigDecimal totalPrice;
-    private boolean isPaid;
-    private String notes;
-    private Long confirmedBy;
-    private LocalDateTime confirmedAt;
-    private Long cancelledBy;
-    private LocalDateTime cancelledAt;
-    private String cancellationReason;
+    private String customerNote;
+    private String managerNote;
+    private Long approvedBy;
+    private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

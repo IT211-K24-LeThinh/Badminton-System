@@ -1,6 +1,6 @@
 package com.re.badmintonsystem.dto.request;
 
-import com.re.badmintonsystem.entity.UserStatus;
+import com.re.badmintonsystem.entity.enums.UserStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

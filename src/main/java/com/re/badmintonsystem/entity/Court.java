@@ -1,5 +1,6 @@
 package com.re.badmintonsystem.entity;
 
+import com.re.badmintonsystem.entity.enums.CourtStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -54,9 +55,5 @@ public class Court {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    public enum CourtStatus {
-        ACTIVE, MAINTENANCE, INACTIVE
     }
 }

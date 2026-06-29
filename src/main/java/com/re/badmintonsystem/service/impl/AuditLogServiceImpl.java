@@ -1,6 +1,8 @@
 package com.re.badmintonsystem.service.impl;
 
 import com.re.badmintonsystem.entity.AuditLog;
+import com.re.badmintonsystem.entity.User;
+import com.re.badmintonsystem.entity.enums.LogStatus;
 import com.re.badmintonsystem.dto.response.PagedResponse;
 import com.re.badmintonsystem.exception.ResourceNotFoundException;
 import com.re.badmintonsystem.repository.AuditLogRepository;
@@ -14,7 +16,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,29 +32,38 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     @Override
     @Transactional
-    public void log(String tableName, Long recordId, String action, String oldValue, String newValue, String detail) {
+    public void log(Long userId, String action, String entityType, Long entityId,
+                    String status, String message, String ipAddress, String userAgent) {
         AuditLog auditLog = new AuditLog();
-        auditLog.setTableName(tableName);
-        auditLog.setRecordId(recordId);
+
+        if (userId != null) {
+            User user = new User();
+            user.setId(userId);
+            auditLog.setUser(user);
+        }
+
         auditLog.setAction(action);
-        auditLog.setOldValue(oldValue);
-        auditLog.setNewValue(newValue);
-        auditLog.setDetail(detail);
+        auditLog.setEntityType(entityType);
+        auditLog.setEntityId(entityId);
+        auditLog.setStatus(LogStatus.valueOf(status));
+        auditLog.setMessage(message);
+        auditLog.setIpAddress(ipAddress);
+        auditLog.setUserAgent(userAgent);
 
         auditLogRepository.save(auditLog);
-        log.debug("Audit log saved: table={}, recordId={}, action={}", tableName, recordId, action);
+        log.debug("Audit log saved: entityType={}, entityId={}, action={}", entityType, entityId, action);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<AuditLog> findAll(String tableName, String action, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "changedAt"));
+    public PagedResponse<AuditLog> findAll(String entityType, String action, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<AuditLog> logPage;
-        if (tableName != null && !tableName.isBlank() && action != null && !action.isBlank()) {
-            logPage = auditLogRepository.findByTableNameAndAction(tableName, action, pageable);
-        } else if (tableName != null && !tableName.isBlank()) {
-            logPage = auditLogRepository.findByTableName(tableName, pageable);
+        if (entityType != null && !entityType.isBlank() && action != null && !action.isBlank()) {
+            logPage = auditLogRepository.findByEntityTypeAndAction(entityType, action, pageable);
+        } else if (entityType != null && !entityType.isBlank()) {
+            logPage = auditLogRepository.findByEntityType(entityType, pageable);
         } else if (action != null && !action.isBlank()) {
             logPage = auditLogRepository.findByAction(action, pageable);
         } else {

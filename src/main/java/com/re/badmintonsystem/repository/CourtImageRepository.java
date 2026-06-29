@@ -7,6 +7,7 @@ import java.util.List;
 
 @Repository
 public interface CourtImageRepository extends JpaRepository<CourtImage, Long> {
+    List<CourtImage> findByCourtId(Long courtId);
     List<CourtImage> findByCourtIdOrderByDisplayOrderAsc(Long courtId);
     List<CourtImage> findByCourtIdAndIsPrimaryTrue(Long courtId);
 }

@@ -5,7 +5,7 @@ import com.re.badmintonsystem.dto.request.CourtStatusRequest;
 import com.re.badmintonsystem.dto.response.CourtAvailabilityResponse;
 import com.re.badmintonsystem.dto.response.CourtResponse;
 import com.re.badmintonsystem.dto.response.PagedResponse;
-import com.re.badmintonsystem.entity.Court.CourtStatus;
+import com.re.badmintonsystem.entity.enums.CourtStatus;
 
 import java.time.LocalDate;
 

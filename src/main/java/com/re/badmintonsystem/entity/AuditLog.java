@@ -1,5 +1,6 @@
 package com.re.badmintonsystem.entity;
 
+import com.re.badmintonsystem.entity.enums.LogStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,33 +19,37 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "table_name", nullable = false, length = 50)
-    private String tableName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    @Column(name = "record_id")
-    private Long recordId;
-
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 100)
     private String action;
 
-    @Column(name = "old_value", columnDefinition = "JSON")
-    private String oldValue;
+    @Column(name = "entity_type", length = 100)
+    private String entityType;
 
-    @Column(name = "new_value", columnDefinition = "JSON")
-    private String newValue;
+    @Column(name = "entity_id")
+    private Long entityId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "changed_by")
-    private User changedBy;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private LogStatus status;
 
-    @Column(name = "changed_at", nullable = false, updatable = false)
-    private LocalDateTime changedAt;
+    @Column(columnDefinition = "TEXT")
+    private String message;
 
-    @Column(length = 255)
-    private String detail;
+    @Column(name = "ip_address", length = 100)
+    private String ipAddress;
+
+    @Column(name = "user_agent", length = 500)
+    private String userAgent;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        changedAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
     }
 }

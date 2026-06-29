@@ -10,10 +10,10 @@ import java.util.List;
 
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
-    List<AuditLog> findByTableName(String tableName);
-    Page<AuditLog> findByTableName(String tableName, Pageable pageable);
-    List<AuditLog> findByTableNameAndRecordId(String tableName, Long recordId);
+    List<AuditLog> findByEntityType(String entityType);
+    Page<AuditLog> findByEntityType(String entityType, Pageable pageable);
+    List<AuditLog> findByEntityTypeAndEntityId(String entityType, Long entityId);
     List<AuditLog> findByAction(String action);
     Page<AuditLog> findByAction(String action, Pageable pageable);
-    Page<AuditLog> findByTableNameAndAction(String tableName, String action, Pageable pageable);
+    Page<AuditLog> findByEntityTypeAndAction(String entityType, String action, Pageable pageable);
 }

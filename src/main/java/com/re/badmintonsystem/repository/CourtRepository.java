@@ -1,7 +1,8 @@
 package com.re.badmintonsystem.repository;
 
 import com.re.badmintonsystem.entity.Court;
-import com.re.badmintonsystem.entity.Court.CourtStatus;
+import com.re.badmintonsystem.entity.enums.CourtStatus;
+import com.re.badmintonsystem.entity.enums.CourtStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -6,11 +6,14 @@ import com.re.badmintonsystem.dto.response.CourtAvailabilityResponse;
 import com.re.badmintonsystem.dto.response.CourtResponse;
 import com.re.badmintonsystem.dto.response.PagedResponse;
 import com.re.badmintonsystem.entity.*;
+import com.re.badmintonsystem.entity.enums.CourtStatus;
+import com.re.badmintonsystem.entity.enums.BookingStatus;
 import com.re.badmintonsystem.exception.BadRequestException;
 import com.re.badmintonsystem.exception.ForbiddenException;
 import com.re.badmintonsystem.exception.ResourceNotFoundException;
 import com.re.badmintonsystem.mapper.CourtMapper;
 import com.re.badmintonsystem.repository.*;
+import com.re.badmintonsystem.service.CourtService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -63,7 +66,7 @@ public class CourtServiceImpl implements CourtService {
         court.setCourtCode(request.getCourtCode());
         court.setDescription(request.getDescription());
         court.setBasePricePerHour(request.getBasePricePerHour());
-        court.setStatus(Court.CourtStatus.ACTIVE);
+        court.setStatus(CourtStatus.ACTIVE);
 
         court = courtRepository.save(court);
         log.info("Created court: {} by manager {}", court.getName(), managerId);
@@ -110,9 +113,9 @@ public class CourtServiceImpl implements CourtService {
 
         // Check for active bookings
         List<Booking> activeBookings = bookingRepository.findByCourtId(id).stream()
-                .filter(b -> b.getStatus() != Booking.BookingStatus.CANCELLED
-                        && b.getStatus() != Booking.BookingStatus.COMPLETED)
-                .collect(Collectors.toList());
+                .filter(b -> b.getStatus() != BookingStatus.CANCELLED
+                        && b.getStatus() != BookingStatus.COMPLETED)
+                .toList();
 
         if (!activeBookings.isEmpty()) {
             throw new BadRequestException("Cannot delete court with active bookings");
@@ -125,7 +128,7 @@ public class CourtServiceImpl implements CourtService {
     @Override
     @Transactional(readOnly = true)
     public PagedResponse<CourtResponse> findAll(String search,
-                                                 Court.CourtStatus status, int page, int size) {
+                                                 CourtStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Court> courtPage;
 
@@ -163,7 +166,7 @@ public class CourtServiceImpl implements CourtService {
         Court court = courtRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Court", "id", id));
 
-        if (court.getStatus() != Court.CourtStatus.ACTIVE) {
+        if (court.getStatus() != CourtStatus.ACTIVE) {
             return CourtAvailabilityResponse.builder()
                     .courtId(id)
                     .courtName(court.getName())
@@ -175,8 +178,8 @@ public class CourtServiceImpl implements CourtService {
         List<TimeSlot> allSlots = timeSlotRepository.findAll();
         List<Booking> bookedSlots = bookingRepository.findByCourtIdAndBookingDate(id, date)
                 .stream()
-                .filter(b -> b.getStatus() != Booking.BookingStatus.CANCELLED)
-                .collect(Collectors.toList());
+                .filter(b -> b.getStatus() != BookingStatus.CANCELLED)
+                .toList();
 
         List<CourtAvailabilityResponse.TimeSlotAvailability> slots = allSlots.stream()
                 .map(slot -> {

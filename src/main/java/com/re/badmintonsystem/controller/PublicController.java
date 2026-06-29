@@ -1,7 +1,7 @@
 package com.re.badmintonsystem.controller;
 
 import com.re.badmintonsystem.dto.response.*;
-import com.re.badmintonsystem.entity.Court.CourtStatus;
+import com.re.badmintonsystem.entity.enums.CourtStatus;
 import com.re.badmintonsystem.service.CourtService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;

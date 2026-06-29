@@ -1,5 +1,6 @@
 package com.re.badmintonsystem.entity;
 
+import com.re.badmintonsystem.entity.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

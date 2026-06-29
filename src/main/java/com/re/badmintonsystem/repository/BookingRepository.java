@@ -1,7 +1,7 @@
 package com.re.badmintonsystem.repository;
 
 import com.re.badmintonsystem.entity.Booking;
-import com.re.badmintonsystem.entity.Booking.BookingStatus;
+import com.re.badmintonsystem.entity.enums.BookingStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

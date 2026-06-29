@@ -17,19 +17,14 @@ public class BookingMapper {
                 .bookingDate(booking.getBookingDate())
                 .status(booking.getStatus().name())
                 .totalPrice(booking.getTotalPrice())
-                .isPaid(booking.isPaid())
-                .notes(booking.getNotes())
+                .customerNote(booking.getCustomerNote())
+                .managerNote(booking.getManagerNote())
                 .createdAt(booking.getCreatedAt())
                 .updatedAt(booking.getUpdatedAt());
 
-        if (booking.getConfirmedBy() != null) {
-            builder.confirmedBy(booking.getConfirmedBy().getId())
-                   .confirmedAt(booking.getConfirmedAt());
-        }
-        if (booking.getCancelledBy() != null) {
-            builder.cancelledBy(booking.getCancelledBy().getId())
-                   .cancelledAt(booking.getCancelledAt())
-                   .cancellationReason(booking.getCancellationReason());
+        if (booking.getApprovedBy() != null) {
+            builder.approvedBy(booking.getApprovedBy().getId())
+                   .approvedAt(booking.getApprovedAt());
         }
 
         return builder.build();

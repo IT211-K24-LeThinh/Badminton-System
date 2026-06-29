@@ -3,7 +3,7 @@ package com.re.badmintonsystem.service;
 import com.re.badmintonsystem.dto.request.BookingRequest;
 import com.re.badmintonsystem.dto.response.BookingResponse;
 import com.re.badmintonsystem.dto.response.PagedResponse;
-import com.re.badmintonsystem.entity.Booking.BookingStatus;
+import com.re.badmintonsystem.entity.enums.BookingStatus;
 
 public interface BookingService {
 

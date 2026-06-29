@@ -4,7 +4,7 @@ import com.re.badmintonsystem.dto.request.BookingRequest;
 import com.re.badmintonsystem.dto.response.ApiResponse;
 import com.re.badmintonsystem.dto.response.BookingResponse;
 import com.re.badmintonsystem.dto.response.PagedResponse;
-import com.re.badmintonsystem.entity.Booking.BookingStatus;
+import com.re.badmintonsystem.entity.enums.BookingStatus;
 import com.re.badmintonsystem.security.CustomUserDetails;
 import com.re.badmintonsystem.service.BookingService;
 import jakarta.validation.Valid;

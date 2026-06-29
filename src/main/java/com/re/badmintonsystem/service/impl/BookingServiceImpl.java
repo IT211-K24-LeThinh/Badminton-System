@@ -4,6 +4,10 @@ import com.re.badmintonsystem.dto.request.BookingRequest;
 import com.re.badmintonsystem.dto.response.BookingResponse;
 import com.re.badmintonsystem.dto.response.PagedResponse;
 import com.re.badmintonsystem.entity.*;
+import com.re.badmintonsystem.entity.enums.BookingStatus;
+import com.re.badmintonsystem.entity.enums.CourtStatus;
+import com.re.badmintonsystem.entity.enums.BookingStatus;
+import com.re.badmintonsystem.entity.enums.CourtStatus;
 import com.re.badmintonsystem.exception.BadRequestException;
 import com.re.badmintonsystem.exception.ResourceNotFoundException;
 import com.re.badmintonsystem.mapper.BookingMapper;
@@ -55,14 +59,14 @@ public class BookingServiceImpl implements BookingService {
         Court court = courtRepository.findById(request.getCourtId())
                 .orElseThrow(() -> new ResourceNotFoundException("Court", "id", request.getCourtId()));
 
-        if (court.getStatus() != Court.CourtStatus.ACTIVE) {
+        if (court.getStatus() != CourtStatus.ACTIVE) {
             throw new BadRequestException("Court is not available for booking");
         }
 
         TimeSlot timeSlot = timeSlotRepository.findById(request.getTimeSlotId())
                 .orElseThrow(() -> new ResourceNotFoundException("TimeSlot", "id", request.getTimeSlotId()));
 
-        // Check if current date is in the past (after creation validation)
+        // Check if current date is in the past
         if (request.getBookingDate().isBefore(LocalDate.now())) {
             throw new BadRequestException("Cannot book for a past date");
         }
@@ -79,10 +83,9 @@ public class BookingServiceImpl implements BookingService {
         booking.setCourt(court);
         booking.setTimeSlot(timeSlot);
         booking.setBookingDate(request.getBookingDate());
-        booking.setStatus(Booking.BookingStatus.PENDING);
-        booking.setNotes(request.getNotes());
+        booking.setStatus(BookingStatus.PENDING);
+        booking.setCustomerNote(request.getNotes());
         booking.setTotalPrice(court.getBasePricePerHour());
-        booking.setPaid(false);
 
         booking = bookingRepository.save(booking);
         log.info("Booking created: id={}", booking.getId());
@@ -100,7 +103,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<BookingResponse> findMyBookings(Long customerId, Booking.BookingStatus status, int page, int size) {
+    public PagedResponse<BookingResponse> findMyBookings(Long customerId, BookingStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Booking> bookingPage;
@@ -128,15 +131,13 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("This is not your booking");
         }
 
-        if (booking.getStatus() != Booking.BookingStatus.PENDING
-                && booking.getStatus() != Booking.BookingStatus.CONFIRMED) {
+        if (booking.getStatus() != BookingStatus.PENDING
+                && booking.getStatus() != BookingStatus.CONFIRMED) {
             throw new BadRequestException("Can only cancel bookings in PENDING or CONFIRMED status");
         }
 
-        booking.setStatus(Booking.BookingStatus.CANCELLED);
-        booking.setCancelledBy(booking.getCustomer());
-        booking.setCancelledAt(LocalDateTime.now());
-        booking.setCancellationReason(reason);
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setCustomerNote(reason);
 
         booking = bookingRepository.save(booking);
         log.info("Booking cancelled: id={}, reason={}", booking.getId(), reason);

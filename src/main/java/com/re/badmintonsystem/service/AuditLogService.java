@@ -5,9 +5,10 @@ import com.re.badmintonsystem.entity.AuditLog;
 
 public interface AuditLogService {
 
-    void log(String tableName, Long recordId, String action, String oldValue, String newValue, String detail);
+    void log(Long userId, String action, String entityType, Long entityId,
+             String status, String message, String ipAddress, String userAgent);
 
-    PagedResponse<AuditLog> findAll(String tableName, String action, int page, int size);
+    PagedResponse<AuditLog> findAll(String entityType, String action, int page, int size);
 
     AuditLog findById(Long id);
 }

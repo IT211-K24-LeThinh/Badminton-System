@@ -5,7 +5,7 @@ import com.re.badmintonsystem.dto.response.PagedResponse;
 import com.re.badmintonsystem.dto.response.UserResponse;
 import com.re.badmintonsystem.entity.Role;
 import com.re.badmintonsystem.entity.User;
-import com.re.badmintonsystem.entity.UserStatus;
+import com.re.badmintonsystem.entity.enums.UserStatus;
 import com.re.badmintonsystem.exception.BadRequestException;
 import com.re.badmintonsystem.exception.ResourceNotFoundException;
 import com.re.badmintonsystem.mapper.UserMapper;

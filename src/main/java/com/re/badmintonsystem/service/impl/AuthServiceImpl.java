@@ -3,6 +3,7 @@ package com.re.badmintonsystem.service.impl;
 import com.re.badmintonsystem.dto.request.*;
 import com.re.badmintonsystem.dto.response.AuthResponse;
 import com.re.badmintonsystem.entity.*;
+import com.re.badmintonsystem.entity.enums.UserStatus;
 import com.re.badmintonsystem.exception.BadRequestException;
 import com.re.badmintonsystem.exception.UnauthorizedException;
 import com.re.badmintonsystem.repository.*;

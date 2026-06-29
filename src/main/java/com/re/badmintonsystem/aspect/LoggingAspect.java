@@ -64,7 +64,7 @@ public class LoggingAspect {
         log.info("<< Exiting: {}.{}() - {} ({}ms)", className, methodName, status, executionTime);
 
         try {
-            auditLogService.log(className, null, methodName, null, null, detail);
+            auditLogService.log(null, methodName, className, null, status, detail, null, null);
         } catch (Exception e) {
             log.warn("Failed to save audit log: {}", e.getMessage());
         }

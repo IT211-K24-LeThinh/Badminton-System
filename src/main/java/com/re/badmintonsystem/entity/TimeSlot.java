@@ -26,4 +26,7 @@ public class TimeSlot {
 
     @Column(nullable = false, length = 100)
     private String label;
+
+    @Column(nullable = false)
+    private boolean active = true;
 }

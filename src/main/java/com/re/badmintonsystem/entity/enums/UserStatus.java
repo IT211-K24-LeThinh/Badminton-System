@@ -1,4 +1,4 @@
-package com.re.badmintonsystem.entity;
+package com.re.badmintonsystem.entity.enums;
 
 public enum UserStatus {
     ACTIVE,

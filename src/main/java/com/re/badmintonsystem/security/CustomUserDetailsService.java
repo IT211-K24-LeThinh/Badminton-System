@@ -1,7 +1,7 @@
 package com.re.badmintonsystem.security;
 
 import com.re.badmintonsystem.entity.User;
-import com.re.badmintonsystem.entity.UserStatus;
+import com.re.badmintonsystem.entity.enums.UserStatus;
 import com.re.badmintonsystem.exception.ResourceNotFoundException;
 import com.re.badmintonsystem.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;

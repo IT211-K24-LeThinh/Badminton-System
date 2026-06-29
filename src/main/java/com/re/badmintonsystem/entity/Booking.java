@@ -1,5 +1,6 @@
 package com.re.badmintonsystem.entity;
 
+import com.re.badmintonsystem.entity.enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,48 +38,28 @@ public class Booking {
     @Column(name = "booking_date", nullable = false)
     private LocalDate bookingDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "checked_in_by")
-    private User checkedInBy;
-
-    @Column(name = "checked_in_at")
-    private LocalDateTime checkedInAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "confirmed_by")
-    private User confirmedBy;
-
-    @Column(name = "confirmed_at")
-    private LocalDateTime confirmedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cancelled_by")
-    private User cancelledBy;
-
-    @Column(name = "cancelled_at")
-    private LocalDateTime cancelledAt;
-
-    @Column(name = "cancellation_reason", length = 500)
-    private String cancellationReason;
+    @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
+    private BigDecimal totalPrice = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private BookingStatus status = BookingStatus.PENDING;
 
-    @Column(columnDefinition = "TEXT")
-    private String notes;
+    @Column(name = "customer_note", columnDefinition = "TEXT")
+    private String customerNote;
 
-    @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
-    private BigDecimal totalPrice = BigDecimal.ZERO;
+    @Column(name = "manager_note", columnDefinition = "TEXT")
+    private String managerNote;
 
-    @Column(name = "is_paid", nullable = false)
-    private boolean isPaid = false;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private User approvedBy;
 
-    @Column(name = "paid_at")
-    private LocalDateTime paidAt;
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
 
-    @Column(name = "active_booking_key", insertable = false, updatable = false, length = 1)
-    private String activeBookingKey;
+    @Column(name = "active_booking_key", insertable = false, updatable = false)
+    private Byte activeBookingKey;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -96,9 +77,5 @@ public class Booking {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    public enum BookingStatus {
-        PENDING, CONFIRMED, CHECKED_IN, COMPLETED, CANCELLED
     }
 }
