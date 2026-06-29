@@ -20,7 +20,6 @@ public class BookingResponse {
     private String customerName;
     private Long courtId;
     private String courtName;
-    private String complexName;
     private Long timeSlotId;
     private String timeSlotLabel;
     private LocalDate bookingDate;

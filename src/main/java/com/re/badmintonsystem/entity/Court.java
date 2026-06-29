@@ -20,8 +20,8 @@ public class Court {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "complex_id", nullable = false)
-    private CourtComplex complex;
+    @JoinColumn(name = "manager_id", nullable = false)
+    private User manager;
 
     @Column(name = "court_code", nullable = false, length = 50)
     private String courtCode;

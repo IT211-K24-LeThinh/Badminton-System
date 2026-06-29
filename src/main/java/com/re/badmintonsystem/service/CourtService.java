@@ -19,7 +19,7 @@ public interface CourtService {
 
     void delete(Long id, Long managerId);
 
-    PagedResponse<CourtResponse> findAll(Long complexId, String search, CourtStatus status, int page, int size);
+    PagedResponse<CourtResponse> findAll(String search, CourtStatus status, int page, int size);
 
     CourtResponse findById(Long id);
 

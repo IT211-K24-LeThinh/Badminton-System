@@ -30,18 +30,18 @@ public class CourtServiceImpl implements CourtService {
     private static final Logger log = LoggerFactory.getLogger(CourtServiceImpl.class);
 
     private final CourtRepository courtRepository;
-    private final CourtComplexRepository complexRepository;
+    private final UserRepository userRepository;
     private final CourtImageRepository courtImageRepository;
     private final BookingRepository bookingRepository;
     private final TimeSlotRepository timeSlotRepository;
 
     public CourtServiceImpl(CourtRepository courtRepository,
-                            CourtComplexRepository complexRepository,
+                            UserRepository userRepository,
                             CourtImageRepository courtImageRepository,
                             BookingRepository bookingRepository,
                             TimeSlotRepository timeSlotRepository) {
         this.courtRepository = courtRepository;
-        this.complexRepository = complexRepository;
+        this.userRepository = userRepository;
         this.courtImageRepository = courtImageRepository;
         this.bookingRepository = bookingRepository;
         this.timeSlotRepository = timeSlotRepository;
@@ -50,19 +50,15 @@ public class CourtServiceImpl implements CourtService {
     @Override
     @Transactional
     public CourtResponse create(CourtRequest request, Long managerId) {
-        CourtComplex complex = complexRepository.findById(request.getComplexId())
-                .orElseThrow(() -> new ResourceNotFoundException("CourtComplex", "id", request.getComplexId()));
-
-        if (!complex.getManager().getId().equals(managerId)) {
-            throw new ForbiddenException("You do not own this court complex");
-        }
+        User manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", managerId));
 
         if (request.getCourtCode() != null && courtRepository.existsByCourtCode(request.getCourtCode())) {
             throw new BadRequestException("Court code already exists");
         }
 
         Court court = new Court();
-        court.setComplex(complex);
+        court.setManager(manager);
         court.setName(request.getName());
         court.setCourtCode(request.getCourtCode());
         court.setDescription(request.getDescription());
@@ -70,7 +66,7 @@ public class CourtServiceImpl implements CourtService {
         court.setStatus(Court.CourtStatus.ACTIVE);
 
         court = courtRepository.save(court);
-        log.info("Created court: {} in complex: {}", court.getName(), complex.getName());
+        log.info("Created court: {} by manager {}", court.getName(), managerId);
 
         return CourtMapper.toResponseWithImageCount(court, 0);
     }
@@ -86,15 +82,6 @@ public class CourtServiceImpl implements CourtService {
             throw new BadRequestException("Court code already exists");
         }
 
-        if (!court.getComplex().getId().equals(request.getComplexId())) {
-            CourtComplex newComplex = complexRepository.findById(request.getComplexId())
-                    .orElseThrow(() -> new ResourceNotFoundException("CourtComplex", "id", request.getComplexId()));
-            if (!newComplex.getManager().getId().equals(managerId)) {
-                throw new ForbiddenException("You do not own the target court complex");
-            }
-            court.setComplex(newComplex);
-        }
-
         court.setName(request.getName());
         court.setCourtCode(request.getCourtCode());
         court.setDescription(request.getDescription());
@@ -103,7 +90,8 @@ public class CourtServiceImpl implements CourtService {
         court = courtRepository.save(court);
         log.info("Updated court: {}", court.getName());
 
-        return CourtMapper.toResponseWithImageCount(court, court.getImages() != null ? court.getImages().size() : 0);
+        int imageCount = courtImageRepository.findByCourtId(court.getId()).size();
+        return CourtMapper.toResponseWithImageCount(court, imageCount);
     }
 
     @Override
@@ -136,14 +124,12 @@ public class CourtServiceImpl implements CourtService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<CourtResponse> findAll(Long complexId, String search,
+    public PagedResponse<CourtResponse> findAll(String search,
                                                  Court.CourtStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Court> courtPage;
 
-        if (complexId != null) {
-            courtPage = courtRepository.findByComplexId(complexId, pageable);
-        } else if (search != null && !search.isBlank()) {
+        if (search != null && !search.isBlank()) {
             courtPage = courtRepository.findByNameContainingIgnoreCase(search, pageable);
         } else if (status != null) {
             courtPage = courtRepository.findByStatus(status, pageable);
@@ -218,8 +204,8 @@ public class CourtServiceImpl implements CourtService {
         Court court = courtRepository.findById(courtId)
                 .orElseThrow(() -> new ResourceNotFoundException("Court", "id", courtId));
 
-        if (!court.getComplex().getManager().getId().equals(managerId)) {
-            throw new ForbiddenException("You do not own the court complex containing this court");
+        if (!court.getManager().getId().equals(managerId)) {
+            throw new ForbiddenException("You do not own this court");
         }
 
         return court;

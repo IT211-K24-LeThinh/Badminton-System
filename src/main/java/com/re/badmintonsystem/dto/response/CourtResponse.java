@@ -20,8 +20,8 @@ public class CourtResponse {
     private String description;
     private BigDecimal basePricePerHour;
     private String status;
-    private Long complexId;
-    private String complexName;
+    private Long managerId;
+    private String managerName;
     private int imageCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

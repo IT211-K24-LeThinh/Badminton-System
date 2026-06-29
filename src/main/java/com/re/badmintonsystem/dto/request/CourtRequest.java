@@ -29,7 +29,4 @@ public class CourtRequest {
     @NotNull(message = "Base price per hour is required")
     @PositiveOrZero(message = "Base price must be zero or positive")
     private BigDecimal basePricePerHour;
-
-    @NotNull(message = "Complex ID is required")
-    private Long complexId;
 }

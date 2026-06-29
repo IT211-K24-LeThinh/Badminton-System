@@ -12,7 +12,6 @@ public class BookingMapper {
                 .customerName(booking.getCustomer().getFullName())
                 .courtId(booking.getCourt().getId())
                 .courtName(booking.getCourt().getName())
-                .complexName(booking.getCourt().getComplex().getName())
                 .timeSlotId(booking.getTimeSlot().getId())
                 .timeSlotLabel(booking.getTimeSlot().getLabel())
                 .bookingDate(booking.getBookingDate())

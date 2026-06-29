@@ -12,8 +12,6 @@ import java.util.Optional;
 
 @Repository
 public interface CourtRepository extends JpaRepository<Court, Long> {
-    List<Court> findByComplexId(Long complexId);
-    Page<Court> findByComplexId(Long complexId, Pageable pageable);
     Optional<Court> findByCourtCode(String courtCode);
     boolean existsByCourtCode(String courtCode);
     Page<Court> findByStatus(CourtStatus status, Pageable pageable);
