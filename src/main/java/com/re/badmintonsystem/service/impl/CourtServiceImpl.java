@@ -23,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -128,7 +129,7 @@ public class CourtServiceImpl implements CourtService {
     @Override
     @Transactional(readOnly = true)
     public PagedResponse<CourtResponse> findAll(String search,
-                                                 CourtStatus status, int page, int size) {
+                                                 CourtStatus status, Double minPrice, Double maxPrice, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Court> courtPage;
 
@@ -136,6 +137,9 @@ public class CourtServiceImpl implements CourtService {
             courtPage = courtRepository.findByNameContainingIgnoreCase(search, pageable);
         } else if (status != null) {
             courtPage = courtRepository.findByStatus(status, pageable);
+        } else if (minPrice != null && maxPrice != null) {
+            courtPage = courtRepository.findByBasePricePerHourBetween(
+                    BigDecimal.valueOf(minPrice), BigDecimal.valueOf(maxPrice), pageable);
         } else {
             courtPage = courtRepository.findAll(pageable);
         }

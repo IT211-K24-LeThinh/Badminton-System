@@ -94,7 +94,7 @@ public class AdminController {
         userService.softDelete(id);
         return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
     }
-    
+
     @GetMapping("/roles")
     public ResponseEntity<ApiResponse<List<Role>>> getRoles() {
         List<Role> response = roleService.findAll();
@@ -123,7 +123,6 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("Role deleted successfully", null));
     }
 
-    // ========== Time Slots ==========
 
     @GetMapping("/time-slots")
     public ResponseEntity<ApiResponse<List<TimeSlot>>> getTimeSlots() {
@@ -159,7 +158,6 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("Time slot deleted successfully", null));
     }
 
-    // ========== Bookings (Admin) ==========
 
     @GetMapping("/bookings")
     public ResponseEntity<ApiResponse<PagedResponse<BookingResponse>>> getBookings(
@@ -176,7 +174,6 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // ========== Audit Logs ==========
 
     @GetMapping("/audit-logs")
     public ResponseEntity<ApiResponse<PagedResponse<AuditLog>>> getAuditLogs(
@@ -194,7 +191,6 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // ========== Reports ==========
 
     @GetMapping("/reports/revenue")
     public ResponseEntity<ApiResponse<RevenueResponse>> getRevenueReport(

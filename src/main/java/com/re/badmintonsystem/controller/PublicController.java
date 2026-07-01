@@ -29,15 +29,16 @@ public class PublicController {
         this.timeSlotService = timeSlotService;
     }
 
-    // ========== Courts (Public) ==========
 
     @GetMapping("/courts")
     public ResponseEntity<ApiResponse<PagedResponse<CourtResponse>>> getCourts(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) CourtStatus status,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PagedResponse<CourtResponse> response = courtService.findAll(search, status, page, size);
+        PagedResponse<CourtResponse> response = courtService.findAll(search, status, minPrice, maxPrice, page, size);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
