@@ -1,36 +1,28 @@
 package com.re.badmintonsystem.controller;
 
-import com.re.badmintonsystem.config.SecurityConfig;
 import com.re.badmintonsystem.dto.request.LoginRequest;
-import com.re.badmintonsystem.dto.request.RefreshRequest;
+import com.re.badmintonsystem.dto.request.RefreshTokenRequest;
 import com.re.badmintonsystem.dto.request.RegisterRequest;
 import com.re.badmintonsystem.dto.response.AuthResponse;
-import com.re.badmintonsystem.dto.response.ApiResponse;
-import com.re.badmintonsystem.security.CustomUserDetailsService;
-import com.re.badmintonsystem.security.JwtAuthenticationEntryPoint;
-import com.re.badmintonsystem.security.JwtAuthenticationFilter;
-import com.re.badmintonsystem.security.JwtTokenProvider;
 import com.re.badmintonsystem.service.AuthService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Set;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
-@Import({SecurityConfig.class})
 class AuthControllerTest {
 
     @Autowired
@@ -39,23 +31,8 @@ class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private AuthService authService;
-
-    @MockBean
-    private JwtTokenProvider jwtTokenProvider;
-
-    @MockBean
-    private CustomUserDetailsService customUserDetailsService;
-
-    @MockBean
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
-    @MockBean
-    private com.re.badmintonsystem.repository.TokenBlacklistRepository tokenBlacklistRepository;
-
-    @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private LoginRequest loginRequest;
     private RegisterRequest registerRequest;
@@ -71,7 +48,6 @@ class AuthControllerTest {
         registerRequest.setEmail("new@example.com");
         registerRequest.setPassword("password");
         registerRequest.setFullName("New User");
-        registerRequest.setPhone("0123456789");
     }
 
     @Test
@@ -89,7 +65,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.accessToken").value("test-access-token"));
+                .andExpect(jsonPath("$.data.access_token").value("test-access-token"));
 
         verify(authService).login(any(LoginRequest.class));
     }
@@ -97,7 +73,12 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /v1/auth/register - should return success")
     void register_shouldReturnSuccess() throws Exception {
-        doNothing().when(authService).register(any(RegisterRequest.class));
+        when(authService.register(any(RegisterRequest.class)))
+                .thenReturn(AuthResponse.builder()
+                        .accessToken("test-access-token")
+                        .refreshToken("test-refresh-token")
+                        .tokenType("Bearer")
+                        .build());
 
         mockMvc.perform(post("/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -121,9 +102,9 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /v1/auth/refresh - should return new token")
+    @DisplayName("POST /v1/auth/refresh-token - should return new token")
     void refresh_shouldReturnNewToken() throws Exception {
-        RefreshRequest refreshRequest = new RefreshRequest();
+        RefreshTokenRequest refreshRequest = new RefreshTokenRequest();
         refreshRequest.setRefreshToken("old-refresh-token");
 
         AuthResponse authResponse = AuthResponse.builder()
@@ -131,23 +112,22 @@ class AuthControllerTest {
                 .refreshToken("new-refresh-token")
                 .tokenType("Bearer")
                 .build();
-        when(authService.refresh(any(RefreshRequest.class))).thenReturn(authResponse);
+        when(authService.refreshToken(anyString())).thenReturn(authResponse);
 
-        mockMvc.perform(post("/v1/auth/refresh")
+        mockMvc.perform(post("/v1/auth/refresh-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(refreshRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.accessToken").value("new-access-token"));
+                .andExpect(jsonPath("$.data.access_token").value("new-access-token"));
     }
 
     @Test
     @DisplayName("POST /v1/auth/logout - should return success")
     void logout_shouldReturnSuccess() throws Exception {
-        doNothing().when(authService).logout(any());
+        doNothing().when(authService).logout(anyString());
 
         mockMvc.perform(post("/v1/auth/logout")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .header("Authorization", "Bearer test-token"))
                 .andExpect(status().isOk());
     }
 
