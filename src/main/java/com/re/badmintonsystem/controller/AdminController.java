@@ -41,8 +41,6 @@ public class AdminController {
         this.reportService = reportService;
     }
 
-    // ========== User Management ==========
-
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<PagedResponse<UserResponse>>> getUsers(
             @RequestParam(required = false) String search,
@@ -96,9 +94,7 @@ public class AdminController {
         userService.softDelete(id);
         return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
     }
-
-    // ========== Role Management ==========
-
+    
     @GetMapping("/roles")
     public ResponseEntity<ApiResponse<List<Role>>> getRoles() {
         List<Role> response = roleService.findAll();

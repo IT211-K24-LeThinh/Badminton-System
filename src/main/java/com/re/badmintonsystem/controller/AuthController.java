@@ -4,6 +4,7 @@ import com.re.badmintonsystem.dto.request.*;
 import com.re.badmintonsystem.dto.response.ApiResponse;
 import com.re.badmintonsystem.dto.response.AuthResponse;
 import com.re.badmintonsystem.security.CustomUserDetails;
+import com.re.badmintonsystem.exception.BadRequestException;
 import com.re.badmintonsystem.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +65,14 @@ public class AuthController {
     @PostMapping("/reset-password")
     @PreAuthorize("permitAll()")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @RequestParam(required = false) String token,
             @Valid @RequestBody ResetPasswordRequest request) {
+        if (token != null && !token.isBlank()) {
+            request.setToken(token);
+        }
+        if (request.getToken() == null || request.getToken().isBlank()) {
+            throw new BadRequestException("Reset token is required");
+        }
         authService.resetPassword(request);
         return ResponseEntity.ok(ApiResponse.success("Password has been reset successfully", null));
     }

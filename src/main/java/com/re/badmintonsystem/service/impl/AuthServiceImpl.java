@@ -227,7 +227,6 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Account is not active");
         }
 
-        // Generate a random reset token (hash of UUID)
         String rawToken = UUID.randomUUID().toString();
         String tokenHash = String.valueOf(rawToken.hashCode());
 

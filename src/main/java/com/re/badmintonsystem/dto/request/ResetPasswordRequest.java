@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ResetPasswordRequest {
 
-    @NotBlank(message = "Reset token is required")
+    // Token can come from query param (?token=...) or from body
     private String token;
 
     @NotBlank(message = "New password is required")

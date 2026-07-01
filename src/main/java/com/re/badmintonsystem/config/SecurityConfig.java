@@ -69,8 +69,16 @@ public class SecurityConfig {
                         .authorities("ROLE_ANONYMOUS")
                         .principal("anonymousUser"))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints — NO authentication required
-                        .requestMatchers("/v1/auth/**").permitAll()
+                        // Public auth endpoints — NO authentication required
+                        .requestMatchers(HttpMethod.POST, "/v1/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/auth/refresh-token").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/auth/forgot-password").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/auth/reset-password").permitAll()
+                        // Authenticated auth endpoints
+                        .requestMatchers(HttpMethod.POST, "/v1/auth/logout").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/v1/auth/change-password").authenticated()
+                        // Remaining public paths
                         .requestMatchers("/v1/public/**").permitAll()
                         // Court browsing (public read)
                         .requestMatchers(HttpMethod.GET, "/v1/court-complexes/**").permitAll()
