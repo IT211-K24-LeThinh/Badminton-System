@@ -258,6 +258,20 @@ public class BookingServiceImpl implements BookingService {
                 bookingPage.getTotalElements(), bookingPage.getTotalPages(), bookingPage.isLast());
     }
 
+    @Override
+    @Transactional
+    public void hardDeleteBooking(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", id));
+
+        if (booking.getStatus() != BookingStatus.COMPLETED) {
+            throw new BadRequestException("Can only hard delete bookings in COMPLETED status");
+        }
+
+        bookingRepository.delete(booking);
+        log.info("Hard deleted booking: id={}", id);
+    }
+
     private Booking findAndVerifyManagerAccess(Long bookingId, Long managerId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", bookingId));

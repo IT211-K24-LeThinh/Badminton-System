@@ -174,6 +174,12 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @DeleteMapping("/bookings/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteBooking(@PathVariable Long id) {
+        bookingService.hardDeleteBooking(id);
+        return ResponseEntity.ok(ApiResponse.success("Booking deleted successfully", null));
+    }
+
 
     @GetMapping("/audit-logs")
     public ResponseEntity<ApiResponse<PagedResponse<AuditLog>>> getAuditLogs(

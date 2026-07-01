@@ -86,16 +86,25 @@ public class CourtServiceImpl implements CourtService {
             throw new BadRequestException("Court code already exists");
         }
 
-        court.setName(request.getName());
-        court.setCourtCode(request.getCourtCode());
-        court.setDescription(request.getDescription());
-        court.setBasePricePerHour(request.getBasePricePerHour());
+        // Only update fields that are explicitly provided (not null)
+        if (request.getName() != null) {
+            court.setName(request.getName());
+        }
+        if (request.getCourtCode() != null) {
+            court.setCourtCode(request.getCourtCode());
+        }
+        if (request.getDescription() != null) {
+            court.setDescription(request.getDescription());
+        }
+        if (request.getBasePricePerHour() != null) {
+            court.setBasePricePerHour(request.getBasePricePerHour());
+        }
 
         court = courtRepository.save(court);
         log.info("Updated court: {}", court.getName());
 
-        int imageCount = courtImageRepository.findByCourtId(court.getId()).size();
-        return CourtMapper.toResponseWithImageCount(court, imageCount);
+        List<CourtImage> images = courtImageRepository.findByCourtId(court.getId());
+        return CourtMapper.toResponseWithImages(court, images);
     }
 
     @Override
@@ -112,7 +121,6 @@ public class CourtServiceImpl implements CourtService {
     public void delete(Long id, Long managerId) {
         Court court = findAndVerifyManagerAccess(id, managerId);
 
-        // Check for active bookings
         List<Booking> activeBookings = bookingRepository.findByCourtId(id).stream()
                 .filter(b -> b.getStatus() != BookingStatus.CANCELLED
                         && b.getStatus() != BookingStatus.COMPLETED)
@@ -160,8 +168,8 @@ public class CourtServiceImpl implements CourtService {
     public CourtResponse findById(Long id) {
         Court court = courtRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Court", "id", id));
-        int imageCount = courtImageRepository.findByCourtId(court.getId()).size();
-        return CourtMapper.toResponseWithImageCount(court, imageCount);
+        List<CourtImage> images = courtImageRepository.findByCourtId(court.getId());
+        return CourtMapper.toResponseWithImages(court, images);
     }
 
     @Override

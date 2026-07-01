@@ -35,7 +35,6 @@ public class ManagerController {
         this.reportService = reportService;
     }
 
-    // ========== Courts ==========
 
     @PostMapping("/courts")
     public ResponseEntity<ApiResponse<CourtResponse>> createCourt(
@@ -72,7 +71,6 @@ public class ManagerController {
         return ResponseEntity.ok(ApiResponse.success("Court deleted successfully", null));
     }
 
-    // ========== Court Images ==========
 
     @PostMapping("/courts/{courtId}/images")
     public ResponseEntity<ApiResponse<List<CourtImageResponse>>> uploadCourtImages(
@@ -99,7 +97,6 @@ public class ManagerController {
         return ResponseEntity.ok(ApiResponse.success("Images reordered successfully", null));
     }
 
-    // ========== Bookings (Manager) ==========
 
     @GetMapping("/bookings")
     public ResponseEntity<ApiResponse<PagedResponse<BookingResponse>>> getManagerBookings(
@@ -146,7 +143,6 @@ public class ManagerController {
         return ResponseEntity.ok(ApiResponse.success("Booking completed successfully", response));
     }
 
-    // ========== Reports ==========
 
     @GetMapping("/reports/revenue")
     public ResponseEntity<ApiResponse<RevenueResponse>> getRevenueReport(

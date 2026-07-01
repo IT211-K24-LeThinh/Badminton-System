@@ -28,4 +28,6 @@ public interface BookingService {
 
     // Admin
     PagedResponse<BookingResponse> findAllBookings(BookingStatus status, int page, int size);
+
+    void hardDeleteBooking(Long id);
 }

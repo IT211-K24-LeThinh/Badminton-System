@@ -23,8 +23,6 @@ public class CustomerController {
         this.bookingService = bookingService;
     }
 
-    // ========== Bookings ==========
-
     @PostMapping("/bookings")
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
             @AuthenticationPrincipal CustomUserDetails userDetails,

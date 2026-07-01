@@ -63,8 +63,6 @@ public class PublicController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // ========== Time Slots (Public) ==========
-
     @GetMapping("/time-slots")
     public ResponseEntity<ApiResponse<List<TimeSlot>>> getActiveTimeSlots() {
         List<TimeSlot> allSlots = timeSlotService.findAll();

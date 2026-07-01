@@ -4,6 +4,7 @@ import com.re.badmintonsystem.dto.response.ApiResponse;
 import com.re.badmintonsystem.dto.response.FileUploadResponse;
 import com.re.badmintonsystem.service.FileUploadService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,9 +21,14 @@ public class FileUploadController {
         this.fileUploadService = fileUploadService;
     }
 
-    @PostMapping("/upload")
+
+    @PostMapping(
+            value = "/upload",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<ApiResponse<FileUploadResponse>> uploadFile(
             @RequestParam("file") MultipartFile file) {
+
         FileUploadResponse response = fileUploadService.upload(file);
         return ResponseEntity.ok(ApiResponse.success("File uploaded successfully", response));
     }

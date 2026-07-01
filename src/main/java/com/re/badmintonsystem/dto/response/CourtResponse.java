@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -23,6 +24,7 @@ public class CourtResponse {
     private Long managerId;
     private String managerName;
     private int imageCount;
+    private List<CourtImageResponse> images;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
