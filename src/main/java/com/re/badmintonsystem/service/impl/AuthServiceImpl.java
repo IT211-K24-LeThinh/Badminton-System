@@ -105,20 +105,22 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
         log.info("Login attempt for: {}", request.getUsernameOrEmail());
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsernameOrEmail(),
-                        request.getPassword()
-                )
-        );
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsernameOrEmail(),
+                            request.getPassword()
+                    )
+            );
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            log.warn("Login failed for {}: {}", request.getUsernameOrEmail(), e.getMessage());
+            throw new UnauthorizedException("Invalid credentials or account is locked/disabled");
+        }
 
         User user = userRepository.findByUsernameOrEmail(
                         request.getUsernameOrEmail(), request.getUsernameOrEmail())
                 .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
-
-        if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new UnauthorizedException("Account is disabled or locked");
-        }
 
         List<String> roleNames = user.getRoles().stream()
                 .map(Role::getName)
@@ -194,11 +196,19 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Invalid or expired access token");
         }
 
+        String tokenHash = String.valueOf(accessToken.hashCode());
+
+        // Idempotent: if already blacklisted, just return
+        if (tokenBlacklistRepository.existsByTokenHash(tokenHash)) {
+            log.info("Token already revoked, skipping");
+            return;
+        }
+
         long expirationTime = jwtTokenProvider.getExpirationFromToken(accessToken);
         Date expiresAt = new Date(expirationTime);
 
         TokenBlacklist blacklistEntry = new TokenBlacklist();
-        blacklistEntry.setTokenHash(String.valueOf(accessToken.hashCode()));
+        blacklistEntry.setTokenHash(tokenHash);
         blacklistEntry.setExpiresAt(expiresAt);
         tokenBlacklistRepository.save(blacklistEntry);
 

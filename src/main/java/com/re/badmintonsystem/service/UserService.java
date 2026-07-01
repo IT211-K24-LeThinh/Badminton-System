@@ -3,6 +3,7 @@ package com.re.badmintonsystem.service;
 import com.re.badmintonsystem.dto.request.*;
 import com.re.badmintonsystem.dto.response.PagedResponse;
 import com.re.badmintonsystem.dto.response.UserResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 
@@ -19,4 +20,11 @@ public interface UserService {
     UserResponse updateRoles(Long id, UserRolesRequest request);
 
     void softDelete(Long id);
+
+    // Profile
+    UserResponse getProfile(Long userId);
+
+    UserResponse updateProfile(Long userId, ProfileUpdateRequest request);
+
+    String uploadAvatar(Long userId, MultipartFile file);
 }

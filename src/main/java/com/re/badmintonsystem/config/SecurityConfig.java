@@ -1,7 +1,11 @@
 package com.re.badmintonsystem.config;
 
+import com.re.badmintonsystem.repository.TokenBlacklistRepository;
+import com.re.badmintonsystem.security.CustomUserDetailsService;
 import com.re.badmintonsystem.security.JwtAuthenticationEntryPoint;
 import com.re.badmintonsystem.security.JwtAuthenticationFilter;
+import com.re.badmintonsystem.security.JwtTokenProvider;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,16 +23,39 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = false, jsr250Enabled = false)
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final TokenBlacklistRepository tokenBlacklistRepository;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+    public SecurityConfig(JwtTokenProvider jwtTokenProvider,
+                          CustomUserDetailsService customUserDetailsService,
+                          TokenBlacklistRepository tokenBlacklistRepository,
                           JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.customUserDetailsService = customUserDetailsService;
+        this.tokenBlacklistRepository = tokenBlacklistRepository;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService, tokenBlacklistRepository);
+    }
+
+    /**
+     * CRITICAL: Disable Spring Boot auto-registration of JwtAuthenticationFilter
+     * as a servlet filter. It must ONLY run inside Spring Security's filter chain.
+     */
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter> disableAutoRegistration(
+            JwtAuthenticationFilter filter) {
+        FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
@@ -38,8 +65,11 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .anonymous(anonymous -> anonymous
+                        .authorities("ROLE_ANONYMOUS")
+                        .principal("anonymousUser"))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // Public endpoints — NO authentication required
                         .requestMatchers("/v1/auth/**").permitAll()
                         .requestMatchers("/v1/public/**").permitAll()
                         // Court browsing (public read)
@@ -52,11 +82,10 @@ public class SecurityConfig {
                         .requestMatchers("/v1/manager/**").hasAuthority("MANAGER")
                         // Authenticated endpoints
                         .requestMatchers("/v1/profile/**").authenticated()
-                        .requestMatchers("/v1/bookings/**").authenticated()
-                        .requestMatchers("/v1/upload/**").authenticated()
+                        .requestMatchers("/v1/files/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

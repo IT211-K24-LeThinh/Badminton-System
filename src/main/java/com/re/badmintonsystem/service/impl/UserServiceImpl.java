@@ -11,6 +11,7 @@ import com.re.badmintonsystem.exception.ResourceNotFoundException;
 import com.re.badmintonsystem.mapper.UserMapper;
 import com.re.badmintonsystem.repository.RoleRepository;
 import com.re.badmintonsystem.repository.UserRepository;
+import com.re.badmintonsystem.service.FileUploadService;
 import com.re.badmintonsystem.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashSet;
 import java.util.List;
@@ -35,13 +37,16 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FileUploadService fileUploadService;
 
     public UserServiceImpl(UserRepository userRepository,
                            RoleRepository roleRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           FileUploadService fileUploadService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.fileUploadService = fileUploadService;
     }
 
     @Override
@@ -181,5 +186,52 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         log.info("Soft deleted user: {}", user.getUsername());
+    }
+
+    // ========== Profile ==========
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        return UserMapper.toResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateProfile(Long userId, ProfileUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+            user.setPhone(request.getPhone());
+        }
+
+        user = userRepository.save(user);
+        log.info("Profile updated for user: {}", user.getUsername());
+
+        return UserMapper.toResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public String uploadAvatar(Long userId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("Avatar file is required");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        var uploadResult = fileUploadService.upload(file);
+        user.setAvatarUrl(uploadResult.getUrl());
+        userRepository.save(user);
+
+        log.info("Avatar uploaded for user {}: {}", user.getUsername(), uploadResult.getUrl());
+        return uploadResult.getUrl();
     }
 }

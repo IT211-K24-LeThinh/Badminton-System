@@ -28,11 +28,16 @@ public class LoggingAspect {
     public void logExecutionTimeAnnotation() {
     }
 
-    @Pointcut("execution(* com.re.badmintonsystem.service..*.*(..))")
+    @Pointcut("within(com.re.badmintonsystem.service..*)")
     public void allServiceMethods() {
     }
 
-    @Around("logExecutionTimeAnnotation() || allServiceMethods()")
+    // Exclude AuditLogService to prevent infinite recursion
+    @Pointcut("!within(com.re.badmintonsystem.service.AuditLogService+)")
+    public void notAuditLogService() {
+    }
+
+    @Around("(logExecutionTimeAnnotation() || allServiceMethods()) && notAuditLogService()")
     public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
         String className = joinPoint.getSignature().getDeclaringType().getSimpleName();

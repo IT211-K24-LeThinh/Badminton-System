@@ -12,16 +12,23 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
+    private static final AntPathMatcher pathMatcher = new AntPathMatcher();
+
+    // Public paths that don't need JWT authentication
+    private static final String[] PUBLIC_PATHS = {
+            "/v1/auth/**",
+            "/v1/public/**",
+    };
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
@@ -33,6 +40,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtTokenProvider = jwtTokenProvider;
         this.customUserDetailsService = customUserDetailsService;
         this.tokenBlacklistRepository = tokenBlacklistRepository;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getRequestURI();
+        // Remove context path if present
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.isEmpty()) {
+            path = path.substring(contextPath.length());
+        }
+        for (String pattern : PUBLIC_PATHS) {
+            if (pathMatcher.match(pattern, path)) {
+                log.debug("Skipping JWT filter for public path: {}", path);
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -51,6 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String tokenHash = String.valueOf(jwt.hashCode());
                 if (tokenBlacklistRepository.existsByTokenHash(tokenHash)) {
                     log.warn("Token is blacklisted");
+                    SecurityContextHolder.clearContext();
                     filterChain.doFilter(request, response);
                     return;
                 }
@@ -69,7 +94,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception ex) {
-            log.error("Could not set user authentication in security context", ex);
+            log.error("Could not set user authentication in security context: {}", ex.getMessage());
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

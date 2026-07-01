@@ -31,4 +31,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     boolean existsByCourtIdAndBookingDateAndTimeSlotIdAndStatusNot(
             Long courtId, LocalDate bookingDate, Long timeSlotId, BookingStatus status);
+
+    // Manager queries
+    List<Booking> findByCourt_ManagerId(Long managerId);
+
+    Page<Booking> findByCourt_ManagerId(Long managerId, Pageable pageable);
+
+    Page<Booking> findByCourt_ManagerIdAndStatus(Long managerId, BookingStatus status, Pageable pageable);
+
+    // Admin queries
+    Page<Booking> findByStatus(BookingStatus status, Pageable pageable);
 }

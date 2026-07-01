@@ -9,6 +9,7 @@ import com.re.badmintonsystem.entity.enums.CourtStatus;
 import com.re.badmintonsystem.entity.enums.BookingStatus;
 import com.re.badmintonsystem.entity.enums.CourtStatus;
 import com.re.badmintonsystem.exception.BadRequestException;
+import com.re.badmintonsystem.exception.ForbiddenException;
 import com.re.badmintonsystem.exception.ResourceNotFoundException;
 import com.re.badmintonsystem.mapper.BookingMapper;
 import com.re.badmintonsystem.repository.*;
@@ -143,6 +144,129 @@ public class BookingServiceImpl implements BookingService {
         log.info("Booking cancelled: id={}, reason={}", booking.getId(), reason);
 
         return BookingMapper.toResponse(booking);
+    }
+
+    // ========== Manager ==========
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<BookingResponse> findByManager(Long managerId, BookingStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Booking> bookingPage;
+        if (status != null) {
+            bookingPage = bookingRepository.findByCourt_ManagerIdAndStatus(managerId, status, pageable);
+        } else {
+            bookingPage = bookingRepository.findByCourt_ManagerId(managerId, pageable);
+        }
+
+        List<BookingResponse> content = bookingPage.getContent().stream()
+                .map(BookingMapper::toResponse)
+                .collect(Collectors.toList());
+
+        return new PagedResponse<>(content, bookingPage.getNumber(), bookingPage.getSize(),
+                bookingPage.getTotalElements(), bookingPage.getTotalPages(), bookingPage.isLast());
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse approve(Long bookingId, Long managerId, String note) {
+        Booking booking = findAndVerifyManagerAccess(bookingId, managerId);
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new BadRequestException("Can only approve bookings in PENDING status");
+        }
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setApprovedBy(booking.getCourt().getManager());
+        booking.setApprovedAt(LocalDateTime.now());
+        booking.setManagerNote(note);
+
+        booking = bookingRepository.save(booking);
+        log.info("Booking approved: id={}, manager={}", bookingId, managerId);
+        return BookingMapper.toResponse(booking);
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse reject(Long bookingId, Long managerId, String reason) {
+        Booking booking = findAndVerifyManagerAccess(bookingId, managerId);
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new BadRequestException("Can only reject bookings in PENDING status");
+        }
+
+        booking.setStatus(BookingStatus.REJECTED);
+        booking.setManagerNote(reason);
+
+        booking = bookingRepository.save(booking);
+        log.info("Booking rejected: id={}, manager={}", bookingId, managerId);
+        return BookingMapper.toResponse(booking);
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse checkIn(Long bookingId, Long managerId) {
+        Booking booking = findAndVerifyManagerAccess(bookingId, managerId);
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new BadRequestException("Can only check-in bookings in CONFIRMED status");
+        }
+
+        booking.setStatus(BookingStatus.CHECKED_IN);
+
+        booking = bookingRepository.save(booking);
+        log.info("Booking checked in: id={}, manager={}", bookingId, managerId);
+        return BookingMapper.toResponse(booking);
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse complete(Long bookingId, Long managerId) {
+        Booking booking = findAndVerifyManagerAccess(bookingId, managerId);
+
+        if (booking.getStatus() != BookingStatus.CHECKED_IN) {
+            throw new BadRequestException("Can only complete bookings in CHECKED_IN status");
+        }
+
+        booking.setStatus(BookingStatus.COMPLETED);
+
+        booking = bookingRepository.save(booking);
+        log.info("Booking completed: id={}, manager={}", bookingId, managerId);
+        return BookingMapper.toResponse(booking);
+    }
+
+    // ========== Admin ==========
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<BookingResponse> findAllBookings(BookingStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Booking> bookingPage;
+        if (status != null) {
+            bookingPage = bookingRepository.findByStatus(status, pageable);
+        } else {
+            bookingPage = bookingRepository.findAll(pageable);
+        }
+
+        List<BookingResponse> content = bookingPage.getContent().stream()
+                .map(BookingMapper::toResponse)
+                .collect(Collectors.toList());
+
+        return new PagedResponse<>(content, bookingPage.getNumber(), bookingPage.getSize(),
+                bookingPage.getTotalElements(), bookingPage.getTotalPages(), bookingPage.isLast());
+    }
+
+    private Booking findAndVerifyManagerAccess(Long bookingId, Long managerId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", bookingId));
+
+        if (!booking.getCourt().getManager().getId().equals(managerId)) {
+            throw new ForbiddenException("You are not the manager of this court");
+        }
+
+        return booking;
     }
 }
 

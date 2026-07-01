@@ -14,4 +14,18 @@ public interface BookingService {
     PagedResponse<BookingResponse> findMyBookings(Long customerId, BookingStatus status, int page, int size);
 
     BookingResponse cancelMyBooking(Long bookingId, Long customerId, String reason);
+
+    // Manager
+    PagedResponse<BookingResponse> findByManager(Long managerId, BookingStatus status, int page, int size);
+
+    BookingResponse approve(Long bookingId, Long managerId, String note);
+
+    BookingResponse reject(Long bookingId, Long managerId, String reason);
+
+    BookingResponse checkIn(Long bookingId, Long managerId);
+
+    BookingResponse complete(Long bookingId, Long managerId);
+
+    // Admin
+    PagedResponse<BookingResponse> findAllBookings(BookingStatus status, int page, int size);
 }

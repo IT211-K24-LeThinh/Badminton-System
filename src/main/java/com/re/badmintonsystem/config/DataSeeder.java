@@ -46,7 +46,7 @@ public class DataSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (roleRepository.count() > 0 || userRepository.count() > 0) {
+        if (userRepository.count() > 0) {
             log.info("Database already has data. Skipping seed.");
             return;
         }
@@ -54,10 +54,13 @@ public class DataSeeder implements ApplicationRunner {
         log.info("Database is empty. Starting data seed...");
 
         log.info("[1/4] Seeding Roles...");
-        Role adminRole = roleRepository.save(new Role("ADMIN", "Quản trị viên hệ thống"));
-        Role managerRole = roleRepository.save(new Role("MANAGER", "Quản lý sân"));
-        Role customerRole = roleRepository.save(new Role("CUSTOMER", "Khách hàng đặt sân"));
-        log.info("  Created roles: ADMIN, MANAGER, CUSTOMER");
+        Role adminRole = roleRepository.findByName("ADMIN")
+                .orElseGet(() -> roleRepository.save(new Role("ADMIN", "Quản trị viên hệ thống")));
+        Role managerRole = roleRepository.findByName("MANAGER")
+                .orElseGet(() -> roleRepository.save(new Role("MANAGER", "Quản lý sân")));
+        Role customerRole = roleRepository.findByName("CUSTOMER")
+                .orElseGet(() -> roleRepository.save(new Role("CUSTOMER", "Khách hàng đặt sân")));
+        log.info("  Roles ready: ADMIN, MANAGER, CUSTOMER");
 
         log.info("[2/4] Seeding Users...");
         String defaultPassword = passwordEncoder.encode("123456");
@@ -150,13 +153,16 @@ public class DataSeeder implements ApplicationRunner {
         };
 
         for (int[] slot : slots) {
-            TimeSlot ts = new TimeSlot();
             LocalTime start = LocalTime.of(slot[0], 0);
             LocalTime end = LocalTime.of(slot[1], 0);
-            ts.setStartTime(start);
-            ts.setEndTime(end);
-            ts.setLabel(String.format("%02d:00 - %02d:00", slot[0], slot[1]));
-            repo.save(ts);
+
+            if (!repo.existsByStartTimeAndEndTime(start, end)) {
+                TimeSlot ts = new TimeSlot();
+                ts.setStartTime(start);
+                ts.setEndTime(end);
+                ts.setLabel(String.format("%02d:00 - %02d:00", slot[0], slot[1]));
+                repo.save(ts);
+            }
         }
     }
 }

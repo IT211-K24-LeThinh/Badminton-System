@@ -88,6 +88,8 @@ public class JwtTokenProvider {
             log.error("Expired JWT token: {}", ex.getMessage());
         } catch (UnsupportedJwtException ex) {
             log.error("Unsupported JWT token: {}", ex.getMessage());
+        } catch (SignatureException ex) {
+            log.error("JWT signature validation failed: {}", ex.getMessage());
         } catch (IllegalArgumentException ex) {
             log.error("JWT claims string is empty: {}", ex.getMessage());
         }
